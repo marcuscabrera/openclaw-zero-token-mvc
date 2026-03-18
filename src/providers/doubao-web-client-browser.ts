@@ -21,7 +21,7 @@ export interface DoubaoWebClientOptions {
 
 /**
  * Doubao Web Client using Playwright browser context
- * 参考 Claude 的实现，在浏览器上下文中执行请求以绕过反爬虫
+ * Baseado na implementação do Claude; executa requisições no contexto do navegador para contornar anti-bot
  */
 export class DoubaoWebClientBrowser {
   private sessionid: string;
@@ -32,7 +32,7 @@ export class DoubaoWebClientBrowser {
   private browser: BrowserContext | null = null;
   private page: Page | null = null;
   private running: RunningChrome | null = null;
-  private conversationId: string | null = null;  // 复用对话 ID
+  private conversationId: string | null = null;  // Reutiliza o ID de conversa existente
 
   constructor(options: DoubaoWebClientOptions | string) {
     if (typeof options === "string") {
@@ -159,11 +159,11 @@ export class DoubaoWebClientBrowser {
   }
 
   async init() {
-    // 确保浏览器已启动并设置好 Cookie
+    // Garante que o navegador está iniciado e os cookies foram configurados
     await this.ensureBrowser();
   }
 
-  /** 将多轮消息合并为 samantha 接口需要的单条 content（纯文本） */
+  /** Mescla múltiplas mensagens em um único content de texto para a interface samantha */
   private mergeMessagesForSamantha(messages: Array<{ role: string; content: string }>): string {
     return messages
       .map(m => {
@@ -187,7 +187,7 @@ export class DoubaoWebClientBrowser {
     console.log(`[Doubao Web Browser] Model: ${modelId}`);
     console.log(`[Doubao Web Browser] Messages count: ${params.messages.length}`);
 
-    // 构建请求体
+    // Constrói o corpo da requisição
     const requestBody = {
       messages: [
         {
@@ -200,22 +200,22 @@ export class DoubaoWebClientBrowser {
       completion_option: {
         is_regen: false,
         with_suggest: true,
-        need_create_conversation: !this.conversationId,  // 如果已有 conversation_id 则不复创建
+        need_create_conversation: !this.conversationId,  // Não recria a conversa se já existe um conversation_id
         launch_stage: 1,
         is_replace: false,
         is_delete: false,
         message_from: 0,
         event_id: "0",
       },
-      conversation_id: this.conversationId || "0",  // 复用已有的 conversation_id
+      conversation_id: this.conversationId || "0",  // Reutiliza o conversation_id existente
       local_conversation_id: `local_16${Date.now().toString().slice(-14)}`,
       local_message_id: crypto.randomUUID(),
     };
 
-    // 在浏览器上下文中执行请求（关键！）
+    // Executa a requisição no contexto do navegador (essencial para contornar anti-bot)
     const responseData = await page.evaluate(
       async ({ baseUrl, body }) => {
-        // 构建查询参数（浏览器会自动生成动态参数）
+        // Constrói os parâmetros de query (o navegador gera automaticamente os parâmetros dinâmicos)
         const params = new URLSearchParams({
           aid: "497858",
           device_platform: "web",
@@ -248,7 +248,7 @@ export class DoubaoWebClientBrowser {
           return { ok: false, status: res.status, error: errorText };
         }
 
-        // 读取流式响应
+        // Lê a resposta em streaming
         const reader = res.body?.getReader();
         if (!reader) {
           return { ok: false, status: 500, error: "No response body" };
@@ -284,10 +284,10 @@ export class DoubaoWebClientBrowser {
     console.log(`[Doubao Web Browser] Response data length: ${responseData.data?.length || 0} bytes`);
     console.log(`[Doubao Web Browser] Response data preview: ${responseData.data?.slice(0, 500)}`);
 
-    // 从响应中提取 conversation_id
+    // Extrai o conversation_id da resposta
     if (!this.conversationId && responseData.data) {
       try {
-        // 查找 data 中的 conversation_id（可能在各个事件的 event_data 中）
+        // Procura o conversation_id nos dados (pode estar no event_data de cada evento)
         const lines = responseData.data.split('\n');
         for (const line of lines) {
           if (line.startsWith('data:') && line.includes('conversation_id')) {
@@ -304,7 +304,7 @@ export class DoubaoWebClientBrowser {
       }
     }
 
-    // 转换为 ReadableStream
+    // Converte para ReadableStream
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {

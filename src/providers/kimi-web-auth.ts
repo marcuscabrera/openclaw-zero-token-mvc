@@ -20,8 +20,8 @@ export interface KimiWebAuthOptions {
 }
 
 /**
- * Kimi 自动登录：与 Claude/Doubao 一致，使用 OpenClaw 的系统 Chrome，
- * 不依赖 Playwright 下载的 bundled Chromium（无需 npx playwright install）
+ * Login automático no Kimi: consistente com Claude/Doubao, usa o Chrome do sistema OpenClaw.
+ * Não depende do Chromium bundled do Playwright (não requer npx playwright install)
  */
 export async function loginKimiWeb(
   options: KimiWebAuthOptions = {},

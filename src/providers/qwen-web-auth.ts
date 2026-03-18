@@ -64,7 +64,7 @@ export async function loginQwenWeb(params: {
     params.onProgress("Connecting to browser...");
     const browser = await chromium.connectOverCDP(wsUrl, {
       headers: getHeadersWithAuth(wsUrl),
-      timeout: 60_000, // 60s，Chrome 多标签或复杂页面时 CDP 握手可能较慢
+      timeout: 60_000, // 60s; o handshake CDP pode ser mais lento com múltiplas abas ou páginas complexas no Chrome
     });
     const context = browser.contexts()[0];
     const page = context.pages()[0] || (await context.newPage());
