@@ -106,7 +106,7 @@ export class GeminiWebClientBrowser {
   }
 
   /**
-   * DOM 模拟：通过真实浏览器交互发送消息，绕过 Bard RPC 协议复杂度
+   * Simulação via DOM: envia mensagem por meio de interação real com o navegador para contornar a complexidade do protocolo Bard RPC
    */
   private async chatCompletionsViaDOM(params: {
     message: string;
@@ -116,7 +116,7 @@ export class GeminiWebClientBrowser {
 
     const sent = await this.page.evaluate(
       (msg: string) => {
-        // 输入框：优先匹配 Gemini 占位符，再通用选择器（参考 Scrapling 多策略）
+        // Campo de entrada: prioriza o placeholder do Gemini, depois seletores genéricos (estratégia multi-seletor)
         const inputSelectors = [
           '[placeholder*="Gemini"]',
           '[placeholder*="问问"]',
@@ -135,7 +135,7 @@ export class GeminiWebClientBrowser {
             break;
           }
         }
-        if (!inputEl) return { ok: false, error: "找不到输入框" };
+        if (!inputEl) return { ok: false, error: "Campo de entrada não encontrado" };
 
         inputEl.focus();
         if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
@@ -183,10 +183,10 @@ export class GeminiWebClientBrowser {
     );
 
     if (!sent.ok) {
-      throw new Error(`Gemini DOM 模拟失败: ${sent.error}`);
+      throw new Error(`Falha na simulação DOM do Gemini: ${sent.error}`);
     }
 
-    console.log("[Gemini Web Browser] DOM 模拟已发送，轮询等待回复...");
+    console.log("[Gemini Web Browser] Simulação DOM enviada; aguardando resposta por polling...");
 
     const maxWaitMs = 120000;
     const pollIntervalMs = 2000;
@@ -195,14 +195,14 @@ export class GeminiWebClientBrowser {
     const signal = params.signal;
 
     for (let elapsed = 0; elapsed < maxWaitMs; elapsed += pollIntervalMs) {
-      if (signal?.aborted) throw new Error("Gemini 请求已取消");
+      if (signal?.aborted) throw new Error("Requisição ao Gemini cancelada");
 
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
       const result = await this.page.evaluate(() => {
         const clean = (t: string) => t.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 
-        // 排除：侧边栏、问候、建议按钮
+        // Excluir: barra lateral, saudações, botões de sugestão
         const skipTexts = [
           "Ask Gemini",
           "问问 Gemini",
@@ -232,7 +232,7 @@ export class GeminiWebClientBrowser {
         const sidebarRoot = document.querySelector('[aria-label*="对话"], [class*="sidebar"], nav');
         const notInSidebar = (el: Element) => !sidebarRoot?.contains(el);
 
-        // 排除输入区域：输入框及其父容器（含建议按钮）
+        // Excluir área de entrada: campo de texto e seu contêiner pai (incluindo botões de sugestão)
         const inputEl = document.querySelector('[contenteditable="true"], textarea, [placeholder*="Gemini"], [placeholder*="问问"]');
         const inputRoot = inputEl?.closest("form") ?? inputEl?.closest("[class*='input']") ?? inputEl?.parentElement?.parentElement;
         const notInInputArea = (el: Element) => !inputRoot?.contains(el);
@@ -269,7 +269,7 @@ export class GeminiWebClientBrowser {
           if (text) break;
         }
 
-        // 策略 2：主区域内按文本量取最后的实质内容块（排除输入区）
+        // Estratégia 2: último bloco de conteúdo substancial na área principal por volume de texto (exclui área de entrada)
         if (!text) {
           const candidates: Array<{ el: Element; text: string }> = [];
           scoped.querySelectorAll("p, div[class], li, span[class]").forEach((el) => {
@@ -289,10 +289,10 @@ export class GeminiWebClientBrowser {
         return { text, isStreaming };
       });
 
-      // 忽略过短内容（<40 字多为问候/按钮；日志 38 字为误抓问候语）
+      // Ignora conteúdo muito curto (<40 chars são geralmente saudações/botões; 38 chars no log era saudação capturada incorretamente)
       const minLen = 40;
       if (result.text && result.text.length < minLen && result.text.length > 0) {
-        console.log(`[Gemini Web Browser] 忽略过短内容(${result.text.length}字): ${result.text.slice(0, 50)}...`);
+        console.log(`[Gemini Web Browser] Conteúdo muito curto ignorado (${result.text.length} chars): ${result.text.slice(0, 50)}...`);
       }
       if (result.text && result.text.length >= minLen) {
         if (result.text !== lastText) {
@@ -309,11 +309,11 @@ export class GeminiWebClientBrowser {
 
     if (!lastText) {
       throw new Error(
-        "Gemini DOM 模拟：未检测到回复。请确保 gemini.google.com 页面已打开、已登录，且输入框可见。"
+        "Simulação DOM do Gemini: nenhuma resposta detectada. Certifique-se de que a página gemini.google.com está aberta, você está logado e o campo de entrada está visível."
       );
     }
 
-    // 输出 gemini-web-stream 可解析的 data: 格式
+    // Emite no formato data: analisável pelo gemini-web-stream
     const sseLine = `data: ${JSON.stringify({ text: lastText })}\n`;
     const encoder = new TextEncoder();
     return new ReadableStream<Uint8Array>({
@@ -335,7 +335,7 @@ export class GeminiWebClientBrowser {
     }
 
     const { message } = params;
-    console.log("[Gemini Web Browser] 使用 DOM 模拟发送消息...");
+    console.log("[Gemini Web Browser] Enviando mensagem via simulação DOM...");
 
     return this.chatCompletionsViaDOM({
       message,

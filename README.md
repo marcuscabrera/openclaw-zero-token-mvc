@@ -4,7 +4,7 @@
 
 [License: MIT](https://opensource.org/licenses/MIT)
 
-English | [简体中文](README.zh-CN.md)
+English | [简体中文](README.zh-CN.md) | [Português (Brasil)](README.pt-BR.md)
 
 ---
 

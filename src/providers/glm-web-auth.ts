@@ -78,7 +78,7 @@ export async function loginZWeb(
     await page.goto("https://chatglm.cn", { waitUntil: "domcontentloaded" });
 
     const userAgent = await page.evaluate(() => navigator.userAgent);
-    onProgress("Please login to ChatGLM (智谱清言) in the opened browser window...");
+    onProgress("Please login to ChatGLM (智谱清言 — Zhipu AI) in the opened browser window...");
     onProgress("Waiting for authentication (chatglm_refresh_token cookie)...");
 
     // Wait for the chatglm_refresh_token cookie which indicates successful login

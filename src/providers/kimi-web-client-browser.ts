@@ -18,7 +18,7 @@ export interface KimiWebClientOptions {
 
 /**
  * Kimi Web Client using CDP attach
- * 使用 Connect RPC 纯 API（/apiv2/kimi.gateway.chat.v1.ChatService/Chat），kimi-auth 从 Cookie 提取
+ * Usa a API Connect RPC pura (/apiv2/kimi.gateway.chat.v1.ChatService/Chat); kimi-auth extraído do Cookie
  */
 export class KimiWebClientBrowser {
   private cookie: string;
@@ -149,7 +149,7 @@ export class KimiWebClientBrowser {
     const kimiAuth = cookies.find((c) => c.name === "kimi-auth")?.value;
     if (!kimiAuth) {
       throw new Error(
-        "Kimi: 未找到 kimi-auth Cookie，请在 Chrome 中登录 www.kimi.com 后再试"
+        "Kimi: Cookie kimi-auth não encontrado. Faça login em www.kimi.com no Chrome e tente novamente"
       );
     }
 
@@ -252,7 +252,7 @@ export class KimiWebClientBrowser {
     );
 
     if (!result.ok) {
-      throw new Error(`Kimi API 错误: ${result.error}`);
+      throw new Error(`Erro na API do Kimi: ${result.error}`);
     }
 
     const escaped = JSON.stringify(result.text);

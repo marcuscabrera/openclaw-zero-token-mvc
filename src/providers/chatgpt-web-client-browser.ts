@@ -153,7 +153,7 @@ export class ChatGPTWebClientBrowser {
     return { browser: this.browser, page: this.page };
   }
 
-  /** 确保 chatgpt.com 页面已加载且 oaistatic Sentinel 脚本已就绪 */
+  /** Garante que a página chatgpt.com está carregada e o script Sentinel do oaistatic está pronto */
   private async ensureChatGptPageReady() {
     if (!this.page) return;
     if (!this.page.url().includes("chatgpt.com")) {
@@ -174,8 +174,8 @@ export class ChatGPTWebClientBrowser {
   }
 
   /**
-   * DOM 模拟：通过真实浏览器交互发送消息，绕过 403 风控
-   * 参考：zsodur/chatgpt-api-by-browser-script 等 DOM 模拟实现
+   * Simulação via DOM: envia mensagem por meio de interação real com o navegador para contornar bloqueios anti-bot 403
+   * Referência: zsodur/chatgpt-api-by-browser-script e outras implementações de simulação DOM
    */
   private async chatCompletionsViaDOM(params: {
     message: string;
@@ -185,7 +185,7 @@ export class ChatGPTWebClientBrowser {
 
     const sent = await page.evaluate(
       (msg: string) => {
-        // 多备选选择器适配 ChatGPT 不同版本 UI
+        // Múltiplos seletores alternativos para adaptar diferentes versões da UI do ChatGPT
         const inputSelectors = [
           "#prompt-textarea",
           "textarea[placeholder]",
@@ -198,7 +198,7 @@ export class ChatGPTWebClientBrowser {
           inputEl = document.querySelector(sel);
           if (inputEl && inputEl.offsetParent !== null) break;
         }
-        if (!inputEl) return { ok: false, error: "找不到输入框" };
+        if (!inputEl) return { ok: false, error: "Campo de entrada não encontrado" };
 
         inputEl.focus();
         if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
@@ -223,7 +223,7 @@ export class ChatGPTWebClientBrowser {
           sendBtn = document.querySelector(sel);
           if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
         }
-        if (!sendBtn) return { ok: false, error: "找不到发送按钮" };
+        if (!sendBtn) return { ok: false, error: "Botão de envio não encontrado" };
         (sendBtn as HTMLElement).click();
         return { ok: true };
       },
@@ -231,10 +231,10 @@ export class ChatGPTWebClientBrowser {
     );
 
     if (!sent.ok) {
-      throw new Error(`ChatGPT DOM 模拟失败: ${sent.error}`);
+      throw new Error(`Falha na simulação DOM do ChatGPT: ${sent.error}`);
     }
 
-    // 轮询等待回复完成（最多约 90 秒，降低频率减少封号风险）
+    // Aguarda resposta por polling (máximo ~90s; intervalo maior reduz risco de bloqueio de conta)
     const maxWaitMs = 90000;
     const pollIntervalMs = 2000;
     let lastText = "";
@@ -242,7 +242,7 @@ export class ChatGPTWebClientBrowser {
     const signal = params.signal;
 
     for (let elapsed = 0; elapsed < maxWaitMs; elapsed += pollIntervalMs) {
-      if (signal?.aborted) throw new Error("ChatGPT 请求已取消");
+      if (signal?.aborted) throw new Error("Requisição ao ChatGPT cancelada");
 
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
@@ -272,7 +272,7 @@ export class ChatGPTWebClientBrowser {
 
     if (!lastText) {
       throw new Error(
-        "ChatGPT DOM 模拟：未检测到回复。请确保 chatgpt.com 页面已打开并登录，且输入框可见。"
+        "Simulação DOM do ChatGPT: nenhuma resposta detectada. Certifique-se de que a página chatgpt.com está aberta, você está logado e o campo de entrada está visível."
       );
     }
 

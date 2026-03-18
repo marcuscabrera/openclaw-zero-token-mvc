@@ -11,7 +11,7 @@ export interface GlmIntlWebClientOptions {
   headless?: boolean;
 }
 
-/** Model ID -> ChatGLM assistant_id mapping (国际版可能需要不同的映射) */
+/** Model ID -> ChatGLM assistant_id mapping (a versão internacional pode exigir mapeamentos diferentes) */
 const ASSISTANT_ID_MAP: Record<string, string> = {
   "glm-4-plus": "65940acff94777010aa6b796",
   "glm-4": "65940acff94777010aa6b796",
